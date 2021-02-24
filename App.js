@@ -6,15 +6,16 @@
  * @flow strict-local
  */
 
+// import Sound from 'react-native-sound';
+
 import React, {useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
-  ScrollView,
   View,
   Text,
   StatusBar,
-  SectionList,
+  ScrollView,
   TouchableWithoutFeedback,
 } from 'react-native';
 
@@ -25,18 +26,31 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
+// const sound = new Sound('http://sounds.com/some-sound', null, (error) => {
+//   if (error) {
+//     // do something
+//   }
+
+//   // play when loaded
+//   sound.play();
+// });
+
 const App: () => React$Node = () => {
-  let minutes = [{title: 'minutes', data: []}];
-  let hours = [{hours: 'minutes', data: []}];
-  const [state, setState] = useState({hours: 0, minutes: 0});
+  let minutes = [];
+  let hours = [];
+  const [state, setState] = useState({hours: 0, minutes: 0, status: ''});
   for (let i = 0; i < 60; i++) {
-    minutes[0].data.push({key: i.toString()});
+    minutes.push({key: i.toString()});
   }
   for (let i = 0; i < 12; i++) {
-    hours[0].data.push({key: i.toString() + ' am'});
+    hours.push({key: i.toString() + ' am'});
   }
   for (let i = 1; i < 12; i++) {
-    hours[0].data.push({key: i.toString() + ' pm'});
+    hours.push({key: i.toString() + ' pm'});
+  }
+
+  function addZero(time) {
+    return time < 10 ? '0' + time : time;
   }
 
   const date = new Date();
@@ -50,7 +64,8 @@ const App: () => React$Node = () => {
   var ampm = date.getHours() < 12 ? 'AM' : 'PM';
 
   if (state.hour === thisHour && state.minute === thisMinute) {
-    console.log('ALARM');
+    setState({...state, status: 'WAKE UP!'});
+    alert('ALARM');
   }
   return (
     <>
@@ -65,47 +80,52 @@ const App: () => React$Node = () => {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionDescription}>Set your alarm </Text>
             <Text style={styles.sectionDescription}>
-              {thisFormattedHour + ':' + thisMinute + ' ' + ampm}
+              {addZero(thisFormattedHour) +
+                ':' +
+                addZero(thisMinute) +
+                ' ' +
+                ampm}
             </Text>
           </View>
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionDescription}>{state.hours}</Text>
+            <Text style={styles.sectionDescription}>
+              {state.hours + ' ' + state.minutes}
+            </Text>
+            <Text style={styles.sectionTitle}>{state.status}</Text>
           </View>
 
           <View style={styles.sectionContainer}>
             <View style={styles.columnsContainer}>
               <View style={styles.column}>
                 <ScrollView>
-                  <SectionList
-                    sections={hours}
-                    keyExtractor={(item, index) => item + index}
-                    renderItem={({item}) => (
-                      <TouchableWithoutFeedback>
-                        <Text
-                          style={styles.item}
-                          onPress={() => {
-                            setState({...state, hours: item.key});
-                          }}>
-                          {item.key}
-                        </Text>
-                      </TouchableWithoutFeedback>
-                    )}
-                  />
-                </ScrollView>
-                <View style={styles.column}>
-                  <SectionList
-                    sections={minutes}
-                    scrollEnabled={true}
-                    renderItem={({item}) => (
+                  {hours.map((hour, i) => {
+                    return (
                       <TouchableWithoutFeedback
                         onPress={() => {
-                          setState({...state, minutes: item.key});
-                        }}>
-                        <Text style={styles.item}>{item.key}</Text>
+                          setState({...state, hours: hour.key});
+                        }}
+                        key={i}>
+                        <Text>{hour.key}</Text>
                       </TouchableWithoutFeedback>
-                    )}
-                  />
-                </View>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+              <View>
+                <ScrollView>
+                  {minutes.map((minute) => {
+                    return (
+                      <TouchableWithoutFeedback>
+                        <Text
+                          onPress={() => {
+                            setState({...state, minutes: minute.key});
+                          }}>
+                          {minute.key}
+                        </Text>
+                      </TouchableWithoutFeedback>
+                    );
+                  })}
+                </ScrollView>
               </View>
             </View>
           </View>
@@ -116,6 +136,9 @@ const App: () => React$Node = () => {
 };
 
 const styles = StyleSheet.create({
+  view: {
+    flexGrow: 1,
+  },
   scrollView: {
     backgroundColor: Colors.lighter,
   },
@@ -143,15 +166,14 @@ const styles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
-  // columnsContainer: {
-  //   // flex: 1,
-  //   flexDirection: 'row',
-  //   flexWrap: 'wrap',
-  //   alignItems: 'flex-start',
-  // },
-  // column: {
-  //   width: '30%',
-  // },
+  columnsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
+  column: {
+    width: '30%',
+  },
   footer: {
     color: Colors.dark,
     fontSize: 12,
