@@ -1,14 +1,8 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import Sound from 'react-native-sound';
+import {LogBox} from 'react-native';
+LogBox.ignoreLogs(['Setting a timer']);
 
-// import Sound from 'react-native-sound';
-
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -16,7 +10,7 @@ import {
   Text,
   StatusBar,
   ScrollView,
-  TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 
 import {
@@ -26,47 +20,80 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-// const sound = new Sound('http://sounds.com/some-sound', null, (error) => {
-//   if (error) {
-//     // do something
-//   }
+const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
-//   // play when loaded
-//   sound.play();
-// });
+alarmSound.setVolume(0.9);
+alarmSound.release();
 
 const App: () => React$Node = () => {
-  let minutes = [];
-  let hours = [];
-  const [state, setState] = useState({hours: 0, minutes: 0, status: ''});
-  for (let i = 0; i < 60; i++) {
-    minutes.push({key: i.toString()});
-  }
-  for (let i = 0; i < 12; i++) {
-    hours.push({key: i.toString() + ' am'});
-  }
-  for (let i = 1; i < 12; i++) {
-    hours.push({key: i.toString() + ' pm'});
-  }
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
+  const [wakeUpMinute, setWakeUpMinute] = useState(0);
+  const [wakeUpHour, setWakeUpHour] = useState(0);
 
-  function addZero(time) {
-    return time < 10 ? '0' + time : time;
-  }
+  const createMinutes = () => {
+    let minutes = [];
+    for (let i = 0; i < 60; i++) {
+      minutes.push(
+        <Pressable
+          key={i}
+          onPress={() => {
+            setWakeUpMinute(i);
+          }}>
+          <Text>{i}</Text>
+        </Pressable>,
+      );
+    }
+    return minutes;
+  };
 
-  const date = new Date();
+  const createHours = () => {
+    let hours = [];
+    for (let i = 0; i < 12; i++) {
+      hours.push(
+        <Pressable
+          key={i}
+          onPress={() => {
+            setWakeUpHour(i);
+          }}>
+          <Text>{i}</Text>
+        </Pressable>,
+      );
+    }
+    return hours;
+  };
 
-  const thisHour = date.getHours();
+  // function addZero(time) {
+  //   return time < 10 ? '0' + time : time;
+  // }
 
-  const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
+  // const date = new Date();
+  // const thisHour = date.getHours();
+  // const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
+  // const thisMinute = date.getMinutes();
+  // var ampm = date.getHours() < 12 ? 'AM' : 'PM';
+  // const latestTime =
+  //   addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
 
-  const thisMinute = date.getMinutes();
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleString());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  var ampm = date.getHours() < 12 ? 'AM' : 'PM';
+  useEffect(() => {
+    const totalWakeUpMilliseconds = (wakeUpHour * 60 + wakeUpMinute) * 60000;
+    if (totalWakeUpMilliseconds > 0) {
+      let alarm = setInterval(() => {
+        alert('WAKE UP');
+        alarmSound.play();
+      }, totalWakeUpMilliseconds);
+      return () => {
+        clearTimeout(alarm);
+      };
+    }
+  }, [wakeUpHour, wakeUpMinute]);
 
-  if (state.hour === thisHour && state.minute === thisMinute) {
-    setState({...state, status: 'WAKE UP!'});
-    alert('ALARM');
-  }
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -78,54 +105,26 @@ const App: () => React$Node = () => {
         </View>
         <View style={styles.body}>
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionDescription}>Set your alarm </Text>
-            <Text style={styles.sectionDescription}>
-              {addZero(thisFormattedHour) +
-                ':' +
-                addZero(thisMinute) +
-                ' ' +
-                ampm}
-            </Text>
+            <Text style={styles.sectionTitle}>Current time:</Text>
+            <Text style={styles.sectionDescription}>{currentTime}</Text>
           </View>
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionDescription}>
-              {state.hours + ' ' + state.minutes}
+            <Text style={styles.sectionTitle}>
+              Set your alarm to go off in:
             </Text>
-            <Text style={styles.sectionTitle}>{state.status}</Text>
+
+            <Text style={styles.sectionDescription}>
+              {wakeUpHour + ' hours and  ' + wakeUpMinute + ' minutes'}
+            </Text>
           </View>
 
           <View style={styles.sectionContainer}>
             <View style={styles.columnsContainer}>
               <View style={styles.column}>
-                <ScrollView>
-                  {hours.map((hour, i) => {
-                    return (
-                      <TouchableWithoutFeedback
-                        onPress={() => {
-                          setState({...state, hours: hour.key});
-                        }}
-                        key={i}>
-                        <Text>{hour.key}</Text>
-                      </TouchableWithoutFeedback>
-                    );
-                  })}
-                </ScrollView>
+                <ScrollView>{createHours()}</ScrollView>
               </View>
               <View>
-                <ScrollView>
-                  {minutes.map((minute) => {
-                    return (
-                      <TouchableWithoutFeedback>
-                        <Text
-                          onPress={() => {
-                            setState({...state, minutes: minute.key});
-                          }}>
-                          {minute.key}
-                        </Text>
-                      </TouchableWithoutFeedback>
-                    );
-                  })}
-                </ScrollView>
+                <ScrollView>{createMinutes()}</ScrollView>
               </View>
             </View>
           </View>
