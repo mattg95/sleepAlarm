@@ -2,7 +2,7 @@
 
 A simple alarm that allows users to set a timer up to 59 minutes, made with React Native.
 
-##Setup
+## Setup
 
  - Clone the repo
  - Run `npm i`
