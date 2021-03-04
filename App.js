@@ -3,7 +3,7 @@ import {LogBox} from 'react-native';
 LogBox.ignoreLogs(['Setting a timer']);
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -30,9 +30,23 @@ alarmSound.release();
 const myIcon = <Icon name="bell" size={30} color="black" />;
 
 const App: () => React$Node = () => {
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
+  const getTime = () => {
+    const addZero = (time) => {
+      return time < 10 ? '0' + time : time;
+    };
+    const date = new Date();
+    const thisHour = date.getHours();
+    const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
+    const ampm = thisHour < 12 ? 'AM' : 'PM';
+    const thisMinute = date.getMinutes();
+    return addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
+  };
+  const prevTimeRef = useRef();
+
+  const [currentTime, setCurrentTime] = useState(getTime());
   const [wakeUpMinutes, setWakeUpMinutes] = useState(-1);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isAlarmSet, setAlarm] = useState(false);
 
   const createMinutes = () => {
     let minutes = [];
@@ -41,6 +55,7 @@ const App: () => React$Node = () => {
         <Pressable
           key={i}
           onPress={() => {
+            setAlarm(true);
             setWakeUpMinutes(i);
           }}
           style={i % 2 === 0 ? styles.pressable1 : styles.pressable2}>
@@ -51,34 +66,21 @@ const App: () => React$Node = () => {
     return minutes;
   };
 
-  // function addZero(time) {
-  //   return time < 10 ? '0' + time : time;
-  // }
-
-  // const date = new Date();
-  // const thisHour = date.getHours();
-  // const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
-  // const thisMinute = date.getMinutes();
-  // var ampm = date.getHours() < 12 ? 'AM' : 'PM';
-  // const latestTime =
-  //   addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date().toLocaleString());
-      setWakeUpMinutes(wakeUpMinutes - 1);
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [wakeUpMinutes]);
-
-  useEffect(() => {
-    const totalWakeUpMilliseconds = wakeUpMinutes * 60000;
-    console.log(totalWakeUpMilliseconds);
-    if (totalWakeUpMilliseconds === 0) {
+    if (wakeUpMinutes === 0) {
+      setAlarm(false);
       setModalVisible(true);
       alarmSound.play();
     }
-  }, [wakeUpMinutes]);
+    const interval = setInterval(() => {
+      setCurrentTime(getTime());
+      if (isAlarmSet && prevTimeRef.current !== currentTime) {
+        prevTimeRef.current = getTime();
+        setWakeUpMinutes(wakeUpMinutes - 1);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentTime, wakeUpMinutes]);
 
   return (
     <>
@@ -93,11 +95,11 @@ const App: () => React$Node = () => {
         <View style={styles.body}>
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Current time</Text>
-            <Text style={styles.sectionDescription}>{currentTime}</Text>
+            <Text style={styles.currentTime}>{currentTime}</Text>
           </View>
           <View style={styles.sectionContainer}>
-            {wakeUpMinutes > 0 && (
-              <Text style={styles.sectionDescription}>
+            {isAlarmSet && (
+              <Text style={styles.alarmDescription}>
                 Alarm set for{' '}
                 {wakeUpMinutes >= 1
                   ? wakeUpMinutes + ' minute from now'
@@ -117,30 +119,24 @@ const App: () => React$Node = () => {
           <View style={styles.sectionContainer}>
             <View style={styles.columnsContainer}>
               <View>
-                {modalVisible && (
-                  <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisible}
-                    onRequestClose={() => {
-                      Alert.alert('Modal has been closed.');
-                      setModalVisible(!modalVisible);
-                    }}>
-                    <View style={styles.centeredView}>
-                      <View style={styles.modalView}>
-                        <Text style={styles.modalText}>WAKE UP!</Text>
-                        <Pressable
-                          style={[styles.button, styles.buttonClose]}
-                          onPress={() => {
-                            setModalVisible(!modalVisible);
-                            alarmSound.stop();
-                          }}>
-                          <Text style={styles.textStyle}>OK</Text>
-                        </Pressable>
-                      </View>
+                <Modal
+                  animationType="slide"
+                  transparent={true}
+                  visible={modalVisible}>
+                  <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                      <Text style={styles.modalText}>WAKE UP!</Text>
+                      <Pressable
+                        style={[styles.button, styles.buttonClose]}
+                        onPress={() => {
+                          setModalVisible(!modalVisible);
+                          alarmSound.stop();
+                        }}>
+                        <Text style={styles.textStyle}>OK</Text>
+                      </Pressable>
                     </View>
-                  </Modal>
-                )}
+                  </View>
+                </Modal>
               </View>
             </View>
           </View>
@@ -191,6 +187,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '400',
     color: Colors.dark,
+  },
+  alarmDescription: {
+    marginTop: 8,
+    fontSize: 22,
+    fontWeight: '400',
+    color: 'red',
+    textAlign: 'center',
+  },
+  currentTime: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '400',
+    textAlign: 'center',
   },
   scrollViewInner: {
     flexDirection: 'column',
