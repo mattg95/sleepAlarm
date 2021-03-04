@@ -20,8 +20,6 @@ const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 alarmSound.setVolume(0.9);
 alarmSound.release();
 
-const myIcon = <Icon name="bell" size={30} color="black" />;
-
 const App: () => React$Node = () => {
   const getTime = () => {
     const addZero = (time) => {
@@ -39,6 +37,20 @@ const App: () => React$Node = () => {
   const [secondsTillAlarm, setSecondsTillAlarm] = useState(-1);
   const [modalVisible, setModalVisible] = useState(false);
   const [isAlarmSet, setAlarm] = useState(false);
+
+  useEffect(() => {
+    if (isAlarmSet && secondsTillAlarm === 0) {
+      setAlarm(false);
+      setModalVisible(true);
+      alarmSound.play();
+      alarmSound.setNumberOfLoops(-1);
+    }
+    const interval = setInterval(() => {
+      setCurrentTime(getTime());
+      isAlarmSet && setSecondsTillAlarm(secondsTillAlarm - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentTime, secondsTillAlarm]);
 
   const createMinutes = () => {
     let minutes = [];
@@ -58,19 +70,7 @@ const App: () => React$Node = () => {
     return minutes;
   };
 
-  useEffect(() => {
-    if (isAlarmSet && secondsTillAlarm === 0) {
-      setAlarm(false);
-      setModalVisible(true);
-      alarmSound.play();
-      alarmSound.setNumberOfLoops(-1);
-    }
-    const interval = setInterval(() => {
-      setCurrentTime(getTime());
-      isAlarmSet && setSecondsTillAlarm(secondsTillAlarm - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [currentTime, secondsTillAlarm]);
+  const myIcon = <Icon name="bell" size={30} style={styles.icon} />;
 
   return (
     <>
@@ -96,16 +96,22 @@ const App: () => React$Node = () => {
                   : ' minutes from now'}
               </Text>
             )}
+            {!isAlarmSet && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.alarmTitle}>Set Alarm for:</Text>
+              </View>
+            )}
           </View>
           {!modalVisible && (
             <View style={styles.scrollViewContainer}>
-              <ScrollView
-                centerContent="true"
-                contentContainerStyle={styles.contentContainer}>
-                <View style={styles.sectionContainer}>
+              <View style={styles.scrollViewScroller}>
+                <ScrollView
+                  centerContent="true"
+                  contentContainerStyle={styles.contentContainer}>
                   <View style={styles.scrollViewInner}>{createMinutes()}</View>
-                </View>
-              </ScrollView>
+                </ScrollView>
+              </View>
+              <Text style={styles.scrollViewDescription}>Minutes from now</Text>
             </View>
           )}
           <View style={styles.sectionContainer}>
@@ -147,7 +153,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 40,
+    fontSize: 58,
     fontWeight: '600',
     color: 'black',
     textAlign: 'center',
@@ -160,19 +166,29 @@ const styles = StyleSheet.create({
     marginTop: 32,
     paddingHorizontal: 24,
   },
+  icon: {
+    color: 'black',
+  },
   body: {
     backgroundColor: 'lightgrey',
     flex: 6,
   },
   alarmContainer: {
     flex: 1,
+    marginBottom: 12,
   },
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,
   },
   sectionTitle: {
-    fontSize: 32,
+    fontSize: 36,
+    fontWeight: '600',
+    color: 'black',
+    textAlign: 'center',
+  },
+  alarmTitle: {
+    fontSize: 24,
     fontWeight: '600',
     color: 'black',
     textAlign: 'center',
@@ -183,6 +199,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: 'grey',
   },
+
   alarmDescription: {
     marginTop: 8,
     fontSize: 22,
@@ -198,9 +215,22 @@ const styles = StyleSheet.create({
   },
   scrollViewInner: {
     flexDirection: 'column',
+    flex: 1,
+    paddingHorizontal: 24,
   },
   scrollViewContainer: {
-    flex: 10,
+    flex: 5,
+    flexDirection: 'row',
+  },
+  scrollViewScroller: {
+    flex: 1,
+  },
+  scrollViewDescription: {
+    flex: 1,
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '400',
+    color: 'grey',
   },
   pressable1: {
     backgroundColor: 'darkcyan',
@@ -213,7 +243,7 @@ const styles = StyleSheet.create({
   pressableText: {
     color: 'white',
     fontSize: 30,
-    marginLeft: 25,
+    textAlign: 'center',
     borderBottomColor: 'grey',
   },
   contentContainer: {
