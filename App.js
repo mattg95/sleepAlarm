@@ -18,7 +18,6 @@ import {
 const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
 alarmSound.setVolume(0.9);
-alarmSound.release();
 
 const App: () => React$Node = () => {
   const getTime = () => {
@@ -89,12 +88,20 @@ const App: () => React$Node = () => {
           </View>
           <View style={styles.alarmContainer}>
             {isAlarmSet && (
-              <Text style={styles.alarmDescription}>
-                Alarm set for{' '}
-                {Math.ceil(secondsTillAlarm / 60) >= 1
-                  ? Math.ceil(secondsTillAlarm / 60) + ' minute from now'
-                  : ' minutes from now'}
-              </Text>
+              <View>
+                <Text style={styles.alarmDescription}>
+                  Alarm set for{' '}
+                  {Math.ceil(secondsTillAlarm / 60) >= 1
+                    ? Math.ceil(secondsTillAlarm / 60) + ' minute from now'
+                    : ' minutes from now'}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setAlarm(false);
+                  }}>
+                  <Text style={styles.cancelButton}>Cancel</Text>
+                </Pressable>
+              </View>
             )}
             {!isAlarmSet && (
               <View style={styles.sectionContainer}>
@@ -199,7 +206,12 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: 'grey',
   },
-
+  currentTime: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
   alarmDescription: {
     marginTop: 8,
     fontSize: 22,
@@ -207,19 +219,26 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
   },
-  currentTime: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  cancelButton: {
+    backgroundColor: 'red',
+    marginTop: 16,
+    marginHorizontal: 24,
+    borderRadius: 20,
+    padding: 10,
     textAlign: 'center',
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 24,
   },
+
   scrollViewInner: {
     flexDirection: 'column',
     flex: 1,
     paddingHorizontal: 24,
   },
   scrollViewContainer: {
-    flex: 5,
+    flex: 3,
     flexDirection: 'row',
   },
   scrollViewScroller: {
