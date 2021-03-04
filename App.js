@@ -142,10 +142,6 @@ const styles = StyleSheet.create({
   safeAreaView: {
     flex: 1,
   },
-  view: {
-    // flexGrow: 1,
-    backgroundColor: 'grey',
-  },
   header: {
     paddingBottom: 24,
     flex: 1,
