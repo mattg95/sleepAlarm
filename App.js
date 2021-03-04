@@ -44,7 +44,7 @@ const App: () => React$Node = () => {
   const prevTimeRef = useRef();
 
   const [currentTime, setCurrentTime] = useState(getTime());
-  const [wakeUpMinutes, setWakeUpMinutes] = useState(-1);
+  const [minsTillAlarm, setMinsTillAlarm] = useState(-1);
   const [modalVisible, setModalVisible] = useState(false);
   const [isAlarmSet, setAlarm] = useState(false);
 
@@ -56,7 +56,7 @@ const App: () => React$Node = () => {
           key={i}
           onPress={() => {
             setAlarm(true);
-            setWakeUpMinutes(i);
+            setMinsTillAlarm(i);
           }}
           style={i % 2 === 0 ? styles.pressable1 : styles.pressable2}>
           <Text style={styles.pressableText}>{i}</Text>
@@ -67,7 +67,7 @@ const App: () => React$Node = () => {
   };
 
   useEffect(() => {
-    if (wakeUpMinutes === 0) {
+    if (isAlarmSet && minsTillAlarm === 0) {
       setAlarm(false);
       setModalVisible(true);
       alarmSound.play();
@@ -76,11 +76,11 @@ const App: () => React$Node = () => {
       setCurrentTime(getTime());
       if (isAlarmSet && prevTimeRef.current !== currentTime) {
         prevTimeRef.current = getTime();
-        setWakeUpMinutes(wakeUpMinutes - 1);
+        setMinsTillAlarm(minsTillAlarm - 1);
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [currentTime, wakeUpMinutes]);
+  }, [currentTime, minsTillAlarm]);
 
   return (
     <>
@@ -101,8 +101,8 @@ const App: () => React$Node = () => {
             {isAlarmSet && (
               <Text style={styles.alarmDescription}>
                 Alarm set for{' '}
-                {wakeUpMinutes >= 1
-                  ? wakeUpMinutes + ' minute from now'
+                {minsTillAlarm >= 1
+                  ? minsTillAlarm + ' minute from now'
                   : ' minutes from now'}
               </Text>
             )}
