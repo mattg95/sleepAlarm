@@ -3,7 +3,7 @@ import {LogBox} from 'react-native';
 LogBox.ignoreLogs(['Setting a timer']);
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,13 +14,6 @@ import {
   Pressable,
   Modal,
 } from 'react-native';
-
-import {
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
 const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
@@ -41,10 +34,9 @@ const App: () => React$Node = () => {
     const thisMinute = date.getMinutes();
     return addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
   };
-  const prevTimeRef = useRef();
 
   const [currentTime, setCurrentTime] = useState(getTime());
-  const [minsTillAlarm, setMinsTillAlarm] = useState(-1);
+  const [secondsTillAlarm, setSecondsTillAlarm] = useState(-1);
   const [modalVisible, setModalVisible] = useState(false);
   const [isAlarmSet, setAlarm] = useState(false);
 
@@ -56,7 +48,7 @@ const App: () => React$Node = () => {
           key={i}
           onPress={() => {
             setAlarm(true);
-            setMinsTillAlarm(i);
+            setSecondsTillAlarm(i * 60);
           }}
           style={i % 2 === 0 ? styles.pressable1 : styles.pressable2}>
           <Text style={styles.pressableText}>{i}</Text>
@@ -67,25 +59,23 @@ const App: () => React$Node = () => {
   };
 
   useEffect(() => {
-    if (isAlarmSet && minsTillAlarm === 0) {
+    if (isAlarmSet && secondsTillAlarm === 0) {
       setAlarm(false);
       setModalVisible(true);
       alarmSound.play();
+      alarmSound.setNumberOfLoops(-1);
     }
     const interval = setInterval(() => {
       setCurrentTime(getTime());
-      if (isAlarmSet && prevTimeRef.current !== currentTime) {
-        prevTimeRef.current = getTime();
-        setMinsTillAlarm(minsTillAlarm - 1);
-      }
+      isAlarmSet && setSecondsTillAlarm(secondsTillAlarm - 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [currentTime, minsTillAlarm]);
+  }, [currentTime, secondsTillAlarm]);
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
+      <SafeAreaView style={styles.safeAreaView}>
         <View style={styles.header}>
           <View style={styles.headerContainer}>
             <Text style={styles.headerTitle}> Alarm</Text>
@@ -97,24 +87,26 @@ const App: () => React$Node = () => {
             <Text style={styles.sectionTitle}>Current time</Text>
             <Text style={styles.currentTime}>{currentTime}</Text>
           </View>
-          <View style={styles.sectionContainer}>
+          <View style={styles.alarmContainer}>
             {isAlarmSet && (
               <Text style={styles.alarmDescription}>
                 Alarm set for{' '}
-                {minsTillAlarm >= 1
-                  ? minsTillAlarm + ' minute from now'
+                {Math.ceil(secondsTillAlarm / 60) >= 1
+                  ? Math.ceil(secondsTillAlarm / 60) + ' minute from now'
                   : ' minutes from now'}
               </Text>
             )}
           </View>
           {!modalVisible && (
-            <ScrollView
-              centerContent="true"
-              contentContainerStyle={styles.contentContainer}>
-              <View style={styles.sectionContainer}>
-                <View style={styles.scrollViewInner}>{createMinutes()}</View>
-              </View>
-            </ScrollView>
+            <View style={styles.scrollViewContainer}>
+              <ScrollView
+                centerContent="true"
+                contentContainerStyle={styles.contentContainer}>
+                <View style={styles.sectionContainer}>
+                  <View style={styles.scrollViewInner}>{createMinutes()}</View>
+                </View>
+              </ScrollView>
+            </View>
           )}
           <View style={styles.sectionContainer}>
             <View style={styles.columnsContainer}>
@@ -132,7 +124,7 @@ const App: () => React$Node = () => {
                           setModalVisible(!modalVisible);
                           alarmSound.stop();
                         }}>
-                        <Text style={styles.textStyle}>OK</Text>
+                        <Text style={styles.buttonText}>OK</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -147,13 +139,16 @@ const App: () => React$Node = () => {
 };
 
 const styles = StyleSheet.create({
+  safeAreaView: {
+    flex: 1,
+  },
   view: {
-    flexGrow: 1,
+    // flexGrow: 1,
     backgroundColor: 'grey',
   },
-
   header: {
     paddingBottom: 24,
+    flex: 1,
   },
   headerTitle: {
     fontSize: 40,
@@ -171,6 +166,10 @@ const styles = StyleSheet.create({
   },
   body: {
     backgroundColor: 'lightgrey',
+    flex: 6,
+  },
+  alarmContainer: {
+    flex: 1,
   },
   sectionContainer: {
     marginTop: 32,
@@ -186,7 +185,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 18,
     fontWeight: '400',
-    color: Colors.dark,
+    color: 'grey',
   },
   alarmDescription: {
     marginTop: 8,
@@ -203,6 +202,9 @@ const styles = StyleSheet.create({
   },
   scrollViewInner: {
     flexDirection: 'column',
+  },
+  scrollViewContainer: {
+    flex: 10,
   },
   pressable1: {
     backgroundColor: 'darkcyan',
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
     width: '30%',
   },
   footer: {
-    color: Colors.dark,
+    color: 'grey',
     fontSize: 12,
     fontWeight: '600',
     padding: 4,
@@ -247,10 +249,12 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   modalView: {
+    position: 'absolute',
+    top: 200,
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
-    padding: 35,
+    padding: 85,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -262,23 +266,24 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   button: {
-    borderRadius: 20,
-    padding: 10,
+    borderRadius: 40,
+    padding: 70,
     elevation: 2,
+    fontSize: 32,
   },
-  buttonOpen: {
-    backgroundColor: '#F194FF',
-  },
+
   buttonClose: {
-    backgroundColor: '#2196F3',
+    backgroundColor: 'lightgreen',
   },
-  textStyle: {
+  buttonText: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 32,
   },
   modalText: {
-    marginBottom: 15,
+    marginBottom: 55,
+    fontSize: 32,
     textAlign: 'center',
   },
 });
