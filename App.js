@@ -1,7 +1,6 @@
 import Sound from 'react-native-sound';
 import {LogBox} from 'react-native';
 LogBox.ignoreLogs(['Setting a timer']);
-import Icon from 'react-native-vector-icons/FontAwesome';
 
 import React, {useState, useEffect} from 'react';
 import {
@@ -13,6 +12,7 @@ import {
   ScrollView,
   Pressable,
   Modal,
+  Image,
 } from 'react-native';
 
 const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
@@ -69,8 +69,6 @@ const App: () => React$Node = () => {
     return minutes;
   };
 
-  const myIcon = <Icon name="bell" size={30} style={styles.icon} />;
-
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -78,7 +76,9 @@ const App: () => React$Node = () => {
         <View style={styles.header}>
           <View style={styles.headerContainer}>
             <Text style={styles.headerTitle}> Alarm</Text>
-            {myIcon}
+            <Image
+              source={require('./assets/alarm.png')}
+              style={styles.icon}></Image>
           </View>
         </View>
         <View style={styles.body}>
@@ -174,7 +174,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   icon: {
-    color: 'black',
+    width: 50,
+    height: 50,
   },
   body: {
     backgroundColor: 'lightgrey',
