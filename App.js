@@ -2,9 +2,9 @@ import Sound from 'react-native-sound';
 import {LogBox} from 'react-native';
 import {configureStore} from '@reduxjs/toolkit';
 
-import {useSelector, useDispatch} from 'react-redux';
+import {useSelector} from 'react-redux';
 
-import React, {useState, useEffect} from 'react';
+import React, {useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -56,7 +56,7 @@ function alarmReducer(state = initialState, action) {
       secondsTillAlarm: action.payload * 60,
     };
   }
-  if (action.type === 'modalVisible/showModal') {
+  if (action.type === 'modalVisible/setModalVisible') {
     return {
       ...state,
       modalVisible: action.payload,
@@ -113,19 +113,13 @@ const setCurrentTime = () => {
 };
 
 export const App = () => {
-  const selectTime = (state) => state.currentTime;
-  const currentTime = useSelector(selectTime);
-
-  const selectIsAlarmSet = (state) => state.isAlarmSet;
-  const isAlarmSet = useSelector(selectIsAlarmSet);
-
-  const selectSecondsTillAlarm = (state) => state.secondsTillAlarm;
-  const secondsTillAlarm = useSelector(selectSecondsTillAlarm);
-
-  const selectModalVisible = (state) => state.modalVisible;
-  const modalVisible = useSelector(selectModalVisible);
+  const currentTime = useSelector((state) => state.currentTime);
+  const isAlarmSet = useSelector((state) => state.isAlarmSet);
+  const secondsTillAlarm = useSelector((state) => state.secondsTillAlarm);
+  const modalVisible = useSelector((state) => state.modalVisible);
 
   useEffect(() => {
+    console.log(isAlarmSet, secondsTillAlarm);
     if (isAlarmSet && secondsTillAlarm === 0) {
       store.dispatch(setAlarm(false));
       store.dispatch(setModalVisible(true));
@@ -133,8 +127,8 @@ export const App = () => {
       alarmSound.setNumberOfLoops(-1);
     }
     const interval = setInterval(() => {
-      console.log(isAlarmSet);
-      console.log(store.getState());
+      console.log(isAlarmSet, secondsTillAlarm);
+
       store.dispatch(setCurrentTime());
       isAlarmSet && store.dispatch(decrement());
     }, 1000);
@@ -180,7 +174,7 @@ export const App = () => {
             {isAlarmSet && (
               <View>
                 <Text style={styles.alarmDescription}>
-                  Alarm set for
+                  Alarm set for{' '}
                   {Math.ceil(secondsTillAlarm / 60) >= 1
                     ? Math.ceil(secondsTillAlarm / 60) + ' minute from now'
                     : ' minutes from now'}

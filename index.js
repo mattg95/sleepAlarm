@@ -10,8 +10,6 @@ import {store} from './App';
 import {name as appName} from './app.json';
 import React from 'react';
 
-console.log(App);
-
 const appWrapper = () => {
   return (
     <Provider store={store}>
