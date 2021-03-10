@@ -2,7 +2,7 @@ import Sound from 'react-native-sound';
 import {LogBox} from 'react-native';
 import {configureStore} from '@reduxjs/toolkit';
 
-import {useSelector, Provider, useDispatch} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 
 import React, {useState, useEffect} from 'react';
 import {
@@ -112,19 +112,18 @@ const setCurrentTime = () => {
   };
 };
 
-const App: () => React$Node = () => {
-  const dispatch = useDispatch(); // Works!
+export const App = () => {
   const selectTime = (state) => state.currentTime;
   const currentTime = useSelector(selectTime);
 
   const selectIsAlarmSet = (state) => state.isAlarmSet;
-  const isAlarmSet = selectIsAlarmSet(store.getState());
+  const isAlarmSet = useSelector(selectIsAlarmSet);
 
   const selectSecondsTillAlarm = (state) => state.secondsTillAlarm;
-  const secondsTillAlarm = selectSecondsTillAlarm(store.getState());
+  const secondsTillAlarm = useSelector(selectSecondsTillAlarm);
 
   const selectModalVisible = (state) => state.modalVisible;
-  const modalVisible = selectModalVisible(store.getState());
+  const modalVisible = useSelector(selectModalVisible);
 
   useEffect(() => {
     if (isAlarmSet && secondsTillAlarm === 0) {
@@ -134,7 +133,7 @@ const App: () => React$Node = () => {
       alarmSound.setNumberOfLoops(-1);
     }
     const interval = setInterval(() => {
-      console.log('hi');
+      console.log(isAlarmSet);
       console.log(store.getState());
       store.dispatch(setCurrentTime());
       isAlarmSet && store.dispatch(decrement());
@@ -181,6 +180,7 @@ const App: () => React$Node = () => {
             {isAlarmSet && (
               <View>
                 <Text style={styles.alarmDescription}>
+                  Alarm set for
                   {Math.ceil(secondsTillAlarm / 60) >= 1
                     ? Math.ceil(secondsTillAlarm / 60) + ' minute from now'
                     : ' minutes from now'}
@@ -238,18 +238,6 @@ const App: () => React$Node = () => {
         </View>
       </SafeAreaView>
     </>
-  );
-};
-
-const AppWrapper = () => {
-  const store = createStore(rootReducer);
-
-  return (
-    <Provider store={store}>
-      {' '}
-      // Set context
-      <App /> // Now App has access to context
-    </Provider>
   );
 };
 
