@@ -119,7 +119,6 @@ export const App = () => {
   const modalVisible = useSelector((state) => state.modalVisible);
 
   useEffect(() => {
-    console.log(isAlarmSet, secondsTillAlarm);
     if (isAlarmSet && secondsTillAlarm === 0) {
       store.dispatch(setAlarm(false));
       store.dispatch(setModalVisible(true));
@@ -127,8 +126,6 @@ export const App = () => {
       alarmSound.setNumberOfLoops(-1);
     }
     const interval = setInterval(() => {
-      console.log(isAlarmSet, secondsTillAlarm);
-
       store.dispatch(setCurrentTime());
       isAlarmSet && store.dispatch(decrement());
     }, 1000);
