@@ -1,6 +1,8 @@
 import Sound from 'react-native-sound';
 import {LogBox} from 'react-native';
-LogBox.ignoreLogs(['Setting a timer']);
+import {configureStore} from '@reduxjs/toolkit';
+
+import {useSelector, Provider, useDispatch} from 'react-redux';
 
 import React, {useState, useEffect} from 'react';
 import {
@@ -15,41 +17,130 @@ import {
   Image,
 } from 'react-native';
 
+LogBox.ignoreLogs(['Setting a timer']);
+
 const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
 alarmSound.setVolume(0.9);
 
-const App: () => React$Node = () => {
-  const getTime = () => {
-    const addZero = (time) => {
-      return time < 10 ? '0' + time : time;
-    };
-    const date = new Date();
-    const thisHour = date.getHours();
-    const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
-    const ampm = thisHour < 12 ? 'AM' : 'PM';
-    const thisMinute = date.getMinutes();
-    return addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
+const getTime = () => {
+  const addZero = (time) => {
+    return time < 10 ? '0' + time : time;
   };
+  const date = new Date();
+  const thisHour = date.getHours();
+  const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
+  const ampm = thisHour < 12 ? 'AM' : 'PM';
+  const thisMinute = date.getMinutes();
+  return addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
+};
 
-  const [currentTime, setCurrentTime] = useState(getTime());
-  const [secondsTillAlarm, setSecondsTillAlarm] = useState(-1);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isAlarmSet, setAlarm] = useState(false);
+const initialState = {
+  secondsTillAlarm: 0,
+  modalVisible: false,
+  isAlarmSet: false,
+  currentTime: getTime(),
+};
+
+function alarmReducer(state = initialState, action) {
+  //reducer
+  if (action.type === 'secondsTillAlarm/decrement') {
+    return {
+      ...state,
+      secondsTillAlarm: state.secondsTillAlarm - 1,
+    };
+  }
+  if (action.type === 'secondsTillAlarm/setSecondsTillAlarm') {
+    return {
+      ...state,
+      secondsTillAlarm: action.payload * 60,
+    };
+  }
+  if (action.type === 'modalVisible/showModal') {
+    return {
+      ...state,
+      modalVisible: action.payload,
+    };
+  }
+  if (action.type === 'time/setCurrentTime') {
+    return {
+      ...state,
+      time: getTime(),
+    };
+  }
+  if (action.type === 'isAlarmSet/setAlarm') {
+    return {
+      ...state,
+      isAlarmSet: action.payload,
+    };
+  }
+  return state;
+}
+
+export const store = configureStore({reducer: alarmReducer});
+
+const decrement = () => {
+  return {
+    type: 'secondsTillAlarm/decrement',
+  };
+};
+
+const setSecondsTillAlarm = (seconds) => {
+  return {
+    type: 'secondsTillAlarm/setSecondsTillAlarm',
+    payload: seconds,
+  };
+};
+
+const setModalVisible = (bool) => {
+  return {
+    type: 'modalVisible/setModalVisible',
+    payload: bool,
+  };
+};
+
+const setAlarm = (bool) => {
+  return {
+    type: 'isAlarmSet/setAlarm',
+    payload: bool,
+  };
+};
+
+const setCurrentTime = () => {
+  return {
+    type: 'time/setTime',
+  };
+};
+
+const App: () => React$Node = () => {
+  const dispatch = useDispatch(); // Works!
+  const selectTime = (state) => state.currentTime;
+  const currentTime = useSelector(selectTime);
+
+  const selectIsAlarmSet = (state) => state.isAlarmSet;
+  const isAlarmSet = selectIsAlarmSet(store.getState());
+
+  const selectSecondsTillAlarm = (state) => state.secondsTillAlarm;
+  const secondsTillAlarm = selectSecondsTillAlarm(store.getState());
+
+  const selectModalVisible = (state) => state.modalVisible;
+  const modalVisible = selectModalVisible(store.getState());
 
   useEffect(() => {
     if (isAlarmSet && secondsTillAlarm === 0) {
-      setAlarm(false);
-      setModalVisible(true);
+      store.dispatch(setAlarm(false));
+      store.dispatch(setModalVisible(true));
       alarmSound.play();
       alarmSound.setNumberOfLoops(-1);
     }
     const interval = setInterval(() => {
-      setCurrentTime(getTime());
-      isAlarmSet && setSecondsTillAlarm(secondsTillAlarm - 1);
+      console.log('hi');
+      console.log(store.getState());
+      store.dispatch(setCurrentTime());
+      isAlarmSet && store.dispatch(decrement());
     }, 1000);
     return () => clearInterval(interval);
-  }, [currentTime, secondsTillAlarm]);
+  }, [currentTime, secondsTillAlarm, isAlarmSet]);
 
   const createMinutes = () => {
     let minutes = [];
@@ -58,8 +149,8 @@ const App: () => React$Node = () => {
         <Pressable
           key={i}
           onPress={() => {
-            setAlarm(true);
-            setSecondsTillAlarm(i * 60);
+            store.dispatch(setAlarm(true));
+            store.dispatch(setSecondsTillAlarm(i));
           }}
           style={i % 2 === 0 ? styles.pressable1 : styles.pressable2}>
           <Text style={styles.pressableText}>{i}</Text>
@@ -90,14 +181,13 @@ const App: () => React$Node = () => {
             {isAlarmSet && (
               <View>
                 <Text style={styles.alarmDescription}>
-                  Alarm set for{' '}
                   {Math.ceil(secondsTillAlarm / 60) >= 1
                     ? Math.ceil(secondsTillAlarm / 60) + ' minute from now'
                     : ' minutes from now'}
                 </Text>
                 <Pressable
                   onPress={() => {
-                    setAlarm(false);
+                    store.dispatch(setAlarm(false));
                   }}>
                   <Text style={styles.cancelButton}>Cancel</Text>
                 </Pressable>
@@ -134,7 +224,7 @@ const App: () => React$Node = () => {
                       <Pressable
                         style={[styles.button, styles.buttonClose]}
                         onPress={() => {
-                          setModalVisible(!modalVisible);
+                          store.dispatch(setModalVisible(false));
                           alarmSound.stop();
                         }}>
                         <Text style={styles.buttonText}>OK</Text>
@@ -148,6 +238,18 @@ const App: () => React$Node = () => {
         </View>
       </SafeAreaView>
     </>
+  );
+};
+
+const AppWrapper = () => {
+  const store = createStore(rootReducer);
+
+  return (
+    <Provider store={store}>
+      {' '}
+      // Set context
+      <App /> // Now App has access to context
+    </Provider>
   );
 };
 
