@@ -17,94 +17,23 @@ import {
   Image,
 } from 'react-native';
 
+import {alarmReducer} from './reducer'
+
 LogBox.ignoreLogs(['Setting a timer']);
 
 const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
 alarmSound.setVolume(0.9);
 
-const getTime = () => {
-  const addZero = (time) => {
-    return time < 10 ? '0' + time : time;
-  };
-  const date = new Date();
-  const thisHour = date.getHours();
-  const thisFormattedHour = thisHour > 12 ? thisHour - 12 : thisHour;
-  const ampm = thisHour < 12 ? 'AM' : 'PM';
-  const thisMinute = date.getMinutes();
-  return addZero(thisFormattedHour) + ':' + addZero(thisMinute) + ' ' + ampm;
-};
-
-const initialState = {
-  secondsTillAlarm: 0,
-  modalVisible: false,
-  isAlarmSet: false,
-  currentTime: getTime(),
-};
-
-function alarmReducer(state = initialState, action) {
-  //reducer
-  if (action.type === 'secondsTillAlarm/decrement') {
-    return {
-      ...state,
-      secondsTillAlarm: state.secondsTillAlarm - 1,
-    };
-  }
-  if (action.type === 'secondsTillAlarm/setSecondsTillAlarm') {
-    return {
-      ...state,
-      secondsTillAlarm: action.payload * 60,
-    };
-  }
-  if (action.type === 'modalVisible/setModalVisible') {
-    return {
-      ...state,
-      modalVisible: action.payload,
-    };
-  }
-  if (action.type === 'time/setCurrentTime') {
-    return {
-      ...state,
-      time: getTime(),
-    };
-  }
-  if (action.type === 'isAlarmSet/setAlarm') {
-    return {
-      ...state,
-      isAlarmSet: action.payload,
-    };
-  }
-  return state;
-}
-
 export const store = configureStore({reducer: alarmReducer});
 
-const decrement = () => {
-  return {
-    type: 'secondsTillAlarm/decrement',
-  };
-};
+const decrement = () => {type: 'secondsTillAlarm/decrement'};
 
-const setSecondsTillAlarm = (seconds) => {
-  return {
-    type: 'secondsTillAlarm/setSecondsTillAlarm',
-    payload: seconds,
-  };
-};
+const setSecondsTillAlarm = (seconds) => { type: 'secondsTillAlarm/setSecondsTillAlarm'; payload: seconds};
 
-const setModalVisible = (bool) => {
-  return {
-    type: 'modalVisible/setModalVisible',
-    payload: bool,
-  };
-};
+const setModalVisible = (bool) => {type: 'modalVisible/setModalVisible'; payload: bool};
 
-const setAlarm = (bool) => {
-  return {
-    type: 'isAlarmSet/setAlarm',
-    payload: bool,
-  };
-};
+const setAlarm = (bool) => { type: 'isAlarmSet/setAlarm'; payload: bool};
 
 const setCurrentTime = () => {
   return {
