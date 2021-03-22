@@ -17,15 +17,13 @@ import {
   Image,
 } from 'react-native';
 
-import {alarmReducer} from './reducer'
+import {store} from "./store"
 
 LogBox.ignoreLogs(['Setting a timer']);
 
 const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
 alarmSound.setVolume(0.9);
-
-export const store = configureStore({reducer: alarmReducer});
 
 const decrement = () => {type: 'secondsTillAlarm/decrement'};
 
