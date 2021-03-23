@@ -1,6 +1,5 @@
 import Sound from 'react-native-sound';
 import {LogBox} from 'react-native';
-import {configureStore} from '@reduxjs/toolkit';
 
 import {useSelector} from 'react-redux';
 
@@ -17,7 +16,7 @@ import {
   Image,
 } from 'react-native';
 
-import {store} from "./store"
+import {store} from './store';
 
 LogBox.ignoreLogs(['Setting a timer']);
 
@@ -25,13 +24,24 @@ const alarmSound = new Sound('daybreak.mp3', Sound.MAIN_BUNDLE, () => {});
 
 alarmSound.setVolume(0.9);
 
-const decrement = () => {type: 'secondsTillAlarm/decrement'};
+const decrement = () => {
+  type: 'secondsTillAlarm/decrement';
+};
 
-const setSecondsTillAlarm = (seconds) => { type: 'secondsTillAlarm/setSecondsTillAlarm'; payload: seconds};
+const setSecondsTillAlarm = (seconds) => {
+  type: 'secondsTillAlarm/setSecondsTillAlarm';
+  payload: seconds;
+};
 
-const setModalVisible = (bool) => {type: 'modalVisible/setModalVisible'; payload: bool};
+const setModalVisible = (bool) => {
+  type: 'modalVisible/setModalVisible';
+  payload: bool;
+};
 
-const setAlarm = (bool) => { type: 'isAlarmSet/setAlarm'; payload: bool};
+const setAlarm = (bool) => {
+  type: 'isAlarmSet/setAlarm';
+  payload: bool;
+};
 
 const setCurrentTime = () => {
   return {
